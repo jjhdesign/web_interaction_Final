@@ -11,7 +11,6 @@
   <style>
     :root {
       --side-margin: 20px;
-      /* Modified from calc(120 / 1440 * 100vw) to 20px */
       --top-bg: #000000;
       --bottom-bg: #f3f3eb;
       --accent: #fc5101;
@@ -38,6 +37,34 @@
       flex-direction: column;
     }
 
+    /* 첫 페이지 전용 상단 배경 */
+    .top-background {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+      transform: translateX(0);
+      transition: transform 0.6s ease-in-out;
+    }
+
+    /* 두 번째 슬라이드부터 화면 왼쪽으로 밀려나는 상태 */
+    .top-background.slide-out {
+      transform: translateX(-100%);
+    }
+
+    .top-background img {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .top-background .bg-main2 {
+      height: 100%;
+      width: auto;
+    }
+
     /* 상단/하단 50:50 */
     .top {
       height: 50vh;
@@ -53,7 +80,7 @@
       position: relative;
     }
 
-    /* 네비게이션 버튼 */
+    /* 네비 */
     .nav-arrow {
       position: absolute;
       top: 50%;
@@ -92,7 +119,6 @@
       transform: translateY(-50%) scale(1.05);
     }
 
-    /* 상단 Years 인디케이터 */
     .years-indicator {
       position: absolute;
       bottom: 18px;
@@ -116,7 +142,6 @@
       text-align: right;
     }
 
-    /* 슬라이드 트랙 */
     .slides-track {
       position: absolute;
       inset: 0;
@@ -144,10 +169,6 @@
       color: rgba(255, 255, 255, 0.16);
       z-index: 1;
       white-space: pre-line;
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
     }
 
     .slide-photo-wrapper {
@@ -200,8 +221,14 @@
 
 <body>
   <div class="page">
+
     <!-- 상단 -->
     <section class="top">
+      <div class="top-background" id="topBg">
+        <img src="pic/main2.jpg" class="bg-main2" alt="">
+        <img src="pic/main1.svg" class="bg-main1" alt="">
+      </div>
+
       <button class="nav-arrow left" id="navPrev">&#8249;</button>
       <button class="nav-arrow right" id="navNext">&#8250;</button>
 
@@ -222,7 +249,7 @@
   </div>
 
   <script>
-    /* ---------------------- 30개 더미 데이터 ---------------------- */
+    /* ---------------------- 데이터 ---------------------- */
     const rawLifespans = [
       1, 5, 10, 20, 35, 60, 90, 120, 200, 350, 500, 800, 1200, 2000, 3500,
       6000, 10000, 20000, 40000, 70000, 100000, 200000, 500000, 1000000,
@@ -238,7 +265,7 @@
     }));
 
     const slides = [
-      { type: "cover", name: "LIFESPAN\nARCHIVE", years: 0, description: "" },
+      { type: "cover", name: "", years: 0, description: "" },
       ...contentSlides,
       { type: "ending", name: "END\nOF\nARCHIVE", years: 0, description: "" },
     ];
@@ -250,30 +277,38 @@
     const yearsValueEl = document.getElementById("yearsValue");
     const graphCanvas = document.getElementById("lifeGraph");
     const ctx = graphCanvas.getContext("2d");
+    const topBg = document.getElementById("topBg");
 
     let currentIndex = 0;
 
+    /* ---------------------- 슬라이드 생성 ---------------------- */
     function createSlides() {
-      slides.forEach((s) => {
+      slides.forEach((s, index) => {
         const el = document.createElement("article");
         el.className = "slide";
 
-        el.innerHTML = `
-          <div class="slide-name">${s.name}</div>
-          <div class="slide-photo-wrapper">
-            <div class="slide-photo-placeholder"></div>
-          </div>
-          <div class="slide-description">${s.description}</div>
-        `;
+        if (index === 0) {
+          el.innerHTML = "";
+        } else {
+          el.innerHTML = `
+            <div class="slide-name">${s.name}</div>
+            <div class="slide-photo-wrapper">
+              <div class="slide-photo-placeholder"></div>
+            </div>
+            <div class="slide-description">${s.description}</div>
+          `;
+        }
         slidesTrackEl.appendChild(el);
       });
     }
 
+    /* ---------------------- 네비 버튼 ---------------------- */
     function updateNavButtons() {
       navPrevEl.disabled = currentIndex === 0;
       navNextEl.disabled = currentIndex === slides.length - 1;
     }
 
+    /* ---------------------- 슬라이드 이동 ---------------------- */
     function goToSlide(i) {
       if (i < 0 || i >= slides.length) return;
 
@@ -283,17 +318,26 @@
       updateNavButtons();
       updateYearsIndicator();
       drawGraph();
+
+      /** ★ 첫 슬라이드 → 배경 제자리
+       *   2번째 슬라이드부터 → 배경도 왼쪽으로 밀려나감
+       */
+      if (currentIndex === 0) {
+        topBg.classList.remove("slide-out");
+      } else {
+        topBg.classList.add("slide-out");
+      }
     }
 
     navPrevEl.onclick = () => goToSlide(currentIndex - 1);
     navNextEl.onclick = () => goToSlide(currentIndex + 1);
 
-    /* ---------------------- 키보드 좌우 이동 추가 ---------------------- */
     document.addEventListener("keydown", (e) => {
       if (e.key === "ArrowLeft") goToSlide(currentIndex - 1);
       if (e.key === "ArrowRight") goToSlide(currentIndex + 1);
     });
 
+    /* ---------------------- Years Indicator ---------------------- */
     function updateYearsIndicator() {
       const s = slides[currentIndex];
       yearsValueEl.textContent =
@@ -307,19 +351,11 @@
       const rect = graphCanvas.getBoundingClientRect();
       graphCanvas.width = rect.width * window.devicePixelRatio;
       graphCanvas.height = rect.height * window.devicePixelRatio;
-      ctx.setTransform(
-        window.devicePixelRatio,
-        0,
-        0,
-        window.devicePixelRatio,
-        0,
-        0
-      );
+      ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
       drawGraph();
     }
     window.addEventListener("resize", resizeCanvas);
 
-    /* ---------------------- 축 + 숫자 (막대보다 위로) ---------------------- */
     function drawAxis(maxVal, leftMargin) {
       const rect = graphCanvas.getBoundingClientRect();
       const W = rect.width;
@@ -329,12 +365,11 @@
       const lineTop = 30;
       const lineBottom = H;
 
-      // 그래프가 그려질 실제 너비
       const graphW = W - leftMargin;
       const step = maxVal / 8;
 
       ctx.save();
-      ctx.font = "300 16px Pretendard"; /* ← 폰트 사이즈 16px */
+      ctx.font = "300 16px Pretendard";
       ctx.fillStyle = "#000000";
       ctx.textAlign = "left";
       ctx.textBaseline = "top";
@@ -344,18 +379,14 @@
 
       for (let i = 0; i <= 8; i++) {
         const ratio = i / 8;
-        // x 좌표는 leftMargin부터 시작
         const x = leftMargin + ratio * graphW;
-
         const val = Math.round(step * i).toLocaleString();
 
-        /* 세로선 */
         ctx.beginPath();
         ctx.moveTo(x, lineTop);
         ctx.lineTo(x, lineBottom);
         ctx.stroke();
 
-        /* 숫자 텍스트 */
         ctx.fillText(val, x, textY);
       }
 
@@ -366,34 +397,26 @@
       const rect = graphCanvas.getBoundingClientRect();
       ctx.clearRect(0, 0, rect.width, rect.height);
 
-      let usedCount = Math.min(
-        Math.max(currentIndex, 0),
-        contentSlides.length
-      );
+      let usedCount = Math.min(Math.max(currentIndex, 0), contentSlides.length);
       const W = rect.width;
       const H = rect.height;
       const topMargin = 30;
-      const leftMargin = 120; // 텍스트 공간 확보
+      const leftMargin = 120;
       const graphH = H - topMargin;
       const graphW = W - leftMargin;
 
-      /* 홈 화면일 때도 축은 보여야 함 */
       if (usedCount === 0) {
-        drawAxis(1, leftMargin); // 임시 maxVal=1
+        drawAxis(1, leftMargin);
         return;
       }
 
       const used = contentSlides.slice(0, usedCount);
-
-      // 큰 수가 위로 가도록 정렬 (내림차순)
       used.sort((a, b) => b.lifespan - a.lifespan);
 
       const maxVal = used[0].lifespan;
 
-      /* 1) 축 먼저 */
       drawAxis(maxVal, leftMargin);
 
-      /* 2) 막대 그리기 */
       const minRecent = graphH * 0.05;
       const normalHeight = graphH / usedCount;
       const recentHeight = Math.max(normalHeight, minRecent);
@@ -403,16 +426,11 @@
         otherCount > 0 ? (graphH - recentHeight) / otherCount : 0;
 
       used.forEach((item, i) => {
-        // 정렬했으므로 0번 인덱스가 가장 큰(최신) 값
         const isRecent = i === 0;
-        let y;
 
-        if (isRecent) {
-          y = topMargin;
-        } else {
-          // 나머지는 그 아래로 차곡차곡
-          y = topMargin + recentHeight + (i - 1) * otherHeight;
-        }
+        let y = isRecent
+          ? topMargin
+          : topMargin + recentHeight + (i - 1) * otherHeight;
 
         const alpha = alphaLevels[i % alphaLevels.length];
         ctx.fillStyle = `rgba(252,81,1,${alpha})`;
@@ -420,22 +438,17 @@
         const barWidth = (item.lifespan / maxVal) * graphW;
         const barHeight = isRecent ? recentHeight : otherHeight;
 
-        // 막대 그리기 (leftMargin에서 시작)
         ctx.fillRect(leftMargin, y, barWidth, barHeight);
 
-        // 왼쪽 텍스트 (이름)
         ctx.save();
         ctx.fillStyle = "#000000";
         ctx.font = "600 14px Pretendard";
         ctx.textAlign = "right";
         ctx.textBaseline = "middle";
-        // 텍스트는 leftMargin보다 약간 왼쪽(10px 여백)에 위치
-        // y는 막대의 중간 높이
         ctx.fillText(item.name, leftMargin - 10, y + barHeight / 2);
         ctx.restore();
       });
 
-      /* 중요: 숫자가 막대보다 위에 나오도록 마지막에 다시 축 숫자를 그린다 */
       drawAxis(maxVal, leftMargin);
     }
 
