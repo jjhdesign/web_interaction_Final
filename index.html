@@ -1,435 +1,453 @@
 <!DOCTYPE html>
 <html lang="ko">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Lifespan Archive Prototype</title>
 
-    <!-- Pretendard 웹폰트 -->
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/pretendard/dist/web/static/pretendard.css"
-    />
+<head>
+  <meta charset="UTF-8" />
+  <title>Lifespan Archive Prototype</title>
 
-    <style>
-      :root {
-        --side-margin: calc(120 / 1440 * 100vw);
-        --top-bg: #000000;
-        --bottom-bg: #f3f3eb;
-        --accent: #fc5101;
-      }
+  <!-- Pretendard 웹폰트 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard/dist/web/static/pretendard.css" />
 
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
+  <style>
+    :root {
+      --side-margin: 20px;
+      /* Modified from calc(120 / 1440 * 100vw) to 20px */
+      --top-bg: #000000;
+      --bottom-bg: #f3f3eb;
+      --accent: #fc5101;
+    }
 
-      html,
-      body {
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-        font-family: "Pretendard", sans-serif;
-      }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-      .page {
-        width: 100vw;
-        height: 100vh;
-        display: flex;
-        flex-direction: column;
-      }
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: "Pretendard", sans-serif;
+    }
 
-      /* 상단/하단 50:50 */
-      .top {
-        height: 50vh;
-        background: var(--top-bg);
-        position: relative;
-        overflow: hidden;
-      }
+    .page {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
 
-      .bottom {
-        height: 50vh;
-        background: var(--bottom-bg);
-        padding: 24px var(--side-margin);
-        position: relative;
-      }
+    /* 상단/하단 50:50 */
+    .top {
+      height: 50vh;
+      background: var(--top-bg);
+      position: relative;
+      overflow: hidden;
+    }
 
-      /* 네비게이션 버튼 */
-      .nav-arrow {
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 44px;
-        height: 44px;
-        border-radius: 999px;
-        border: 1px solid #555;
-        background: #111;
-        color: #ffffff;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 22px;
-        cursor: pointer;
-        z-index: 100;
-        transition: 0.2s ease;
-      }
+    .bottom {
+      height: 50vh;
+      background: var(--bottom-bg);
+      padding: 24px var(--side-margin);
+      position: relative;
+    }
 
-      .nav-arrow.left {
-        left: var(--side-margin);
-      }
+    /* 네비게이션 버튼 */
+    .nav-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 44px;
+      height: 44px;
+      border-radius: 999px;
+      border: 1px solid #555;
+      background: #111;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      cursor: pointer;
+      z-index: 100;
+      transition: 0.2s ease;
+    }
 
-      .nav-arrow.right {
-        right: var(--side-margin);
-      }
+    .nav-arrow.left {
+      left: var(--side-margin);
+    }
 
-      .nav-arrow:disabled {
-        opacity: 0;
-        pointer-events: none;
-      }
+    .nav-arrow.right {
+      right: var(--side-margin);
+    }
 
-      .nav-arrow:not(:disabled):hover {
-        background: #181818;
-        border-color: var(--accent);
-        transform: translateY(-50%) scale(1.05);
-      }
+    .nav-arrow:disabled {
+      opacity: 0;
+      pointer-events: none;
+    }
 
-      /* 상단 Years 인디케이터 */
-      .years-indicator {
-        position: absolute;
-        bottom: 18px;
-        left: 50%;
-        transform: translateX(-50%);
-        display: flex;
-        gap: 6px;
-        align-items: baseline;
-        color: #aaaaaa;
-        font-size: 14px;
-        letter-spacing: 0.25em;
-        text-transform: uppercase;
-        z-index: 90;
-      }
+    .nav-arrow:not(:disabled):hover {
+      background: #181818;
+      border-color: var(--accent);
+      transform: translateY(-50%) scale(1.05);
+    }
 
-      .years-indicator span:first-child {
-        color: var(--accent);
-        font-size: 24px;
-        font-weight: 600;
-        min-width: 3ch;
-        text-align: right;
-      }
+    /* 상단 Years 인디케이터 */
+    .years-indicator {
+      position: absolute;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 6px;
+      align-items: baseline;
+      color: #aaaaaa;
+      font-size: 14px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      z-index: 90;
+    }
 
-      /* 슬라이드 트랙 */
-      .slides-track {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        height: 100%;
-        transition: transform 0.6s ease-in-out;
-      }
+    .years-indicator span:first-child {
+      color: var(--accent);
+      font-size: 24px;
+      font-weight: 600;
+      min-width: 3ch;
+      text-align: right;
+    }
 
-      .slide {
-        flex: 0 0 100%;
-        height: 100%;
-        position: relative;
-        padding: 0 var(--side-margin);
-      }
+    /* 슬라이드 트랙 */
+    .slides-track {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      height: 100%;
+      transition: transform 0.6s ease-in-out;
+    }
 
-      .slide-name {
-        position: absolute;
-        left: 0;
-        bottom: 10%;
-        max-width: 50vw;
-        font-size: clamp(64px, 11vw, 200px);
-        font-weight: 700;
-        line-height: 0.85;
-        text-transform: uppercase;
-        color: rgba(255, 255, 255, 0.16);
-        z-index: 1;
-        white-space: pre-line;
-        display: -webkit-box;
-        -webkit-line-clamp: 3;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-      }
+    .slide {
+      flex: 0 0 100%;
+      height: 100%;
+      position: relative;
+      padding: 0 var(--side-margin);
+    }
 
-      .slide-photo-wrapper {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 33.333%;
-        height: 100%;
-        z-index: 2;
-      }
+    .slide-name {
+      position: absolute;
+      left: 0;
+      bottom: 10%;
+      max-width: 50vw;
+      font-size: clamp(64px, 11vw, 200px);
+      font-weight: 700;
+      line-height: 0.85;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.16);
+      z-index: 1;
+      white-space: pre-line;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
 
-      .slide-photo-placeholder {
-        width: 100%;
-        height: 100%;
-        border-radius: 24px;
-        border: 1px solid #333333;
-        background: radial-gradient(
-          circle at 30% 20%,
+    .slide-photo-wrapper {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 33.333%;
+      height: 100%;
+      z-index: 2;
+    }
+
+    .slide-photo-placeholder {
+      width: 100%;
+      height: 100%;
+      border-radius: 24px;
+      border: 1px solid #333333;
+      background: radial-gradient(circle at 30% 20%,
           rgba(252, 81, 1, 0.5),
-          transparent 60%
-        );
-      }
+          transparent 60%);
+    }
 
-      .slide-description {
-        position: absolute;
-        top: 50%;
-        left: 66.666%;
-        transform: translateY(-50%);
-        max-width: calc(100% - 66.666% - var(--side-margin));
-        font-size: 16px;
-        line-height: 1.6;
-        color: #dddddd;
-        z-index: 3;
-        white-space: pre-line;
-      }
+    .slide-description {
+      position: absolute;
+      top: 50%;
+      left: 66.666%;
+      transform: translateY(-50%);
+      max-width: calc(100% - 66.666% - var(--side-margin));
+      font-size: 16px;
+      line-height: 1.6;
+      color: #dddddd;
+      z-index: 3;
+      white-space: pre-line;
+    }
 
-      /* 하단 그래프 */
-      .graph-wrapper {
-        width: 100%;
-        height: 100%;
-        border-top: 1px solid #aaaaaa;
-        padding-top: 12px;
-        position: relative;
-      }
+    /* 하단 그래프 */
+    .graph-wrapper {
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
 
-      canvas {
-        width: 100%;
-        height: 100%;
-        display: block;
-      }
-    </style>
-  </head>
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+  </style>
+</head>
 
-  <body>
-    <div class="page">
-      <!-- 상단 -->
-      <section class="top">
-        <button class="nav-arrow left" id="navPrev">&#8249;</button>
-        <button class="nav-arrow right" id="navNext">&#8250;</button>
+<body>
+  <div class="page">
+    <!-- 상단 -->
+    <section class="top">
+      <button class="nav-arrow left" id="navPrev">&#8249;</button>
+      <button class="nav-arrow right" id="navNext">&#8250;</button>
 
-        <div class="years-indicator">
-          <span id="yearsValue">00</span>
-          <span>Years</span>
-        </div>
+      <div class="years-indicator">
+        <span id="yearsValue">00</span>
+        <span>Years</span>
+      </div>
 
-        <div class="slides-track" id="slidesTrack"></div>
-      </section>
+      <div class="slides-track" id="slidesTrack"></div>
+    </section>
 
-      <!-- 하단 -->
-      <section class="bottom">
-        <div class="graph-wrapper">
-          <canvas id="lifeGraph"></canvas>
-        </div>
-      </section>
-    </div>
+    <!-- 하단 -->
+    <section class="bottom">
+      <div class="graph-wrapper">
+        <canvas id="lifeGraph"></canvas>
+      </div>
+    </section>
+  </div>
 
-    <script>
-      /* ---------------------- 40개 더미 데이터 ---------------------- */
-      const rawLifespans = [
-        1, 5, 10, 20, 35, 60, 90, 120, 200, 350, 500, 800, 1200, 2000, 3500,
-        6000, 10000, 20000, 40000, 70000, 100000, 200000, 500000, 1000000,
-        2000000, 5000000, 10000000, 30000000, 60000000, 100000000, 300000000,
-        700000000, 1000000000, 3000000000, 5000000000, 7000000000, 10000000000,
-        30000000000, 70000000000, 130000000000,
-      ];
+  <script>
+    /* ---------------------- 30개 더미 데이터 ---------------------- */
+    const rawLifespans = [
+      1, 5, 10, 20, 35, 60, 90, 120, 200, 350, 500, 800, 1200, 2000, 3500,
+      6000, 10000, 20000, 40000, 70000, 100000, 200000, 500000, 1000000,
+      2000000, 5000000, 10000000, 30000000, 60000000, 100000000,
+    ];
 
-      const contentSlides = rawLifespans.map((years, i) => ({
-        type: "content",
-        name: `OBJECT ${i + 1}`,
-        years,
-        lifespan: years,
-        description: `더미 데이터\n수명: ${years.toLocaleString()} Years`,
-      }));
+    const contentSlides = rawLifespans.map((years, i) => ({
+      type: "content",
+      name: `OBJECT ${i + 1}`,
+      years,
+      lifespan: years,
+      description: `더미 데이터\n수명: ${years.toLocaleString()} Years`,
+    }));
 
-      const slides = [
-        { type: "cover", name: "LIFESPAN\nARCHIVE", years: 0, description: "" },
-        ...contentSlides,
-        { type: "ending", name: "END\nOF\nARCHIVE", years: 0, description: "" },
-      ];
+    const slides = [
+      { type: "cover", name: "LIFESPAN\nARCHIVE", years: 0, description: "" },
+      ...contentSlides,
+      { type: "ending", name: "END\nOF\nARCHIVE", years: 0, description: "" },
+    ];
 
-      /* ---------------------- DOM ---------------------- */
-      const slidesTrackEl = document.getElementById("slidesTrack");
-      const navPrevEl = document.getElementById("navPrev");
-      const navNextEl = document.getElementById("navNext");
-      const yearsValueEl = document.getElementById("yearsValue");
-      const graphCanvas = document.getElementById("lifeGraph");
-      const ctx = graphCanvas.getContext("2d");
+    /* ---------------------- DOM ---------------------- */
+    const slidesTrackEl = document.getElementById("slidesTrack");
+    const navPrevEl = document.getElementById("navPrev");
+    const navNextEl = document.getElementById("navNext");
+    const yearsValueEl = document.getElementById("yearsValue");
+    const graphCanvas = document.getElementById("lifeGraph");
+    const ctx = graphCanvas.getContext("2d");
 
-      let currentIndex = 0;
+    let currentIndex = 0;
 
-      function createSlides() {
-        slides.forEach((s) => {
-          const el = document.createElement("article");
-          el.className = "slide";
+    function createSlides() {
+      slides.forEach((s) => {
+        const el = document.createElement("article");
+        el.className = "slide";
 
-          el.innerHTML = `
+        el.innerHTML = `
           <div class="slide-name">${s.name}</div>
           <div class="slide-photo-wrapper">
             <div class="slide-photo-placeholder"></div>
           </div>
           <div class="slide-description">${s.description}</div>
         `;
-          slidesTrackEl.appendChild(el);
-        });
+        slidesTrackEl.appendChild(el);
+      });
+    }
+
+    function updateNavButtons() {
+      navPrevEl.disabled = currentIndex === 0;
+      navNextEl.disabled = currentIndex === slides.length - 1;
+    }
+
+    function goToSlide(i) {
+      if (i < 0 || i >= slides.length) return;
+
+      currentIndex = i;
+      slidesTrackEl.style.transform = `translateX(-${i * 100}%)`;
+
+      updateNavButtons();
+      updateYearsIndicator();
+      drawGraph();
+    }
+
+    navPrevEl.onclick = () => goToSlide(currentIndex - 1);
+    navNextEl.onclick = () => goToSlide(currentIndex + 1);
+
+    /* ---------------------- 키보드 좌우 이동 추가 ---------------------- */
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft") goToSlide(currentIndex - 1);
+      if (e.key === "ArrowRight") goToSlide(currentIndex + 1);
+    });
+
+    function updateYearsIndicator() {
+      const s = slides[currentIndex];
+      yearsValueEl.textContent =
+        s.type === "content" ? s.years.toLocaleString() : "00";
+    }
+
+    /* ---------------------- 그래프 ---------------------- */
+    const alphaLevels = [1, 0.8, 0.6, 0.4, 0.25, 0.15];
+
+    function resizeCanvas() {
+      const rect = graphCanvas.getBoundingClientRect();
+      graphCanvas.width = rect.width * window.devicePixelRatio;
+      graphCanvas.height = rect.height * window.devicePixelRatio;
+      ctx.setTransform(
+        window.devicePixelRatio,
+        0,
+        0,
+        window.devicePixelRatio,
+        0,
+        0
+      );
+      drawGraph();
+    }
+    window.addEventListener("resize", resizeCanvas);
+
+    /* ---------------------- 축 + 숫자 (막대보다 위로) ---------------------- */
+    function drawAxis(maxVal, leftMargin) {
+      const rect = graphCanvas.getBoundingClientRect();
+      const W = rect.width;
+      const H = rect.height;
+
+      const textY = 0;
+      const lineTop = 30;
+      const lineBottom = H;
+
+      // 그래프가 그려질 실제 너비
+      const graphW = W - leftMargin;
+      const step = maxVal / 8;
+
+      ctx.save();
+      ctx.font = "300 16px Pretendard"; /* ← 폰트 사이즈 16px */
+      ctx.fillStyle = "#000000";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+
+      ctx.strokeStyle = "rgba(0,0,0,0.1)";
+      ctx.lineWidth = 1;
+
+      for (let i = 0; i <= 8; i++) {
+        const ratio = i / 8;
+        // x 좌표는 leftMargin부터 시작
+        const x = leftMargin + ratio * graphW;
+
+        const val = Math.round(step * i).toLocaleString();
+
+        /* 세로선 */
+        ctx.beginPath();
+        ctx.moveTo(x, lineTop);
+        ctx.lineTo(x, lineBottom);
+        ctx.stroke();
+
+        /* 숫자 텍스트 */
+        ctx.fillText(val, x, textY);
       }
 
-      function updateNavButtons() {
-        navPrevEl.disabled = currentIndex === 0;
-        navNextEl.disabled = currentIndex === slides.length - 1;
+      ctx.restore();
+    }
+
+    function drawGraph() {
+      const rect = graphCanvas.getBoundingClientRect();
+      ctx.clearRect(0, 0, rect.width, rect.height);
+
+      let usedCount = Math.min(
+        Math.max(currentIndex, 0),
+        contentSlides.length
+      );
+      const W = rect.width;
+      const H = rect.height;
+      const topMargin = 30;
+      const leftMargin = 120; // 텍스트 공간 확보
+      const graphH = H - topMargin;
+      const graphW = W - leftMargin;
+
+      /* 홈 화면일 때도 축은 보여야 함 */
+      if (usedCount === 0) {
+        drawAxis(1, leftMargin); // 임시 maxVal=1
+        return;
       }
 
-      function goToSlide(i) {
-        if (i < 0 || i >= slides.length) return;
+      const used = contentSlides.slice(0, usedCount);
 
-        currentIndex = i;
-        slidesTrackEl.style.transform = `translateX(-${i * 100}%)`;
+      // 큰 수가 위로 가도록 정렬 (내림차순)
+      used.sort((a, b) => b.lifespan - a.lifespan);
 
-        updateNavButtons();
-        updateYearsIndicator();
-        drawGraph();
-      }
+      const maxVal = used[0].lifespan;
 
-      navPrevEl.onclick = () => goToSlide(currentIndex - 1);
-      navNextEl.onclick = () => goToSlide(currentIndex + 1);
+      /* 1) 축 먼저 */
+      drawAxis(maxVal, leftMargin);
 
-      /* ---------------------- 키보드 좌우 이동 추가 ---------------------- */
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "ArrowLeft") goToSlide(currentIndex - 1);
-        if (e.key === "ArrowRight") goToSlide(currentIndex + 1);
+      /* 2) 막대 그리기 */
+      const minRecent = graphH * 0.05;
+      const normalHeight = graphH / usedCount;
+      const recentHeight = Math.max(normalHeight, minRecent);
+
+      const otherCount = usedCount - 1;
+      const otherHeight =
+        otherCount > 0 ? (graphH - recentHeight) / otherCount : 0;
+
+      used.forEach((item, i) => {
+        // 정렬했으므로 0번 인덱스가 가장 큰(최신) 값
+        const isRecent = i === 0;
+        let y;
+
+        if (isRecent) {
+          y = topMargin;
+        } else {
+          // 나머지는 그 아래로 차곡차곡
+          y = topMargin + recentHeight + (i - 1) * otherHeight;
+        }
+
+        const alpha = alphaLevels[i % alphaLevels.length];
+        ctx.fillStyle = `rgba(252,81,1,${alpha})`;
+
+        const barWidth = (item.lifespan / maxVal) * graphW;
+        const barHeight = isRecent ? recentHeight : otherHeight;
+
+        // 막대 그리기 (leftMargin에서 시작)
+        ctx.fillRect(leftMargin, y, barWidth, barHeight);
+
+        // 왼쪽 텍스트 (이름)
+        ctx.save();
+        ctx.fillStyle = "#000000";
+        ctx.font = "600 14px Pretendard";
+        ctx.textAlign = "right";
+        ctx.textBaseline = "middle";
+        // 텍스트는 leftMargin보다 약간 왼쪽(10px 여백)에 위치
+        // y는 막대의 중간 높이
+        ctx.fillText(item.name, leftMargin - 10, y + barHeight / 2);
+        ctx.restore();
       });
 
-      function updateYearsIndicator() {
-        const s = slides[currentIndex];
-        yearsValueEl.textContent =
-          s.type === "content" ? s.years.toLocaleString() : "00";
-      }
+      /* 중요: 숫자가 막대보다 위에 나오도록 마지막에 다시 축 숫자를 그린다 */
+      drawAxis(maxVal, leftMargin);
+    }
 
-      /* ---------------------- 그래프 ---------------------- */
-      const alphaLevels = [1, 0.8, 0.6, 0.4, 0.25, 0.15];
+    /* ---------------------- 초기화 ---------------------- */
+    function init() {
+      createSlides();
+      resizeCanvas();
+      goToSlide(0);
+    }
 
-      function resizeCanvas() {
-        const rect = graphCanvas.getBoundingClientRect();
-        graphCanvas.width = rect.width * window.devicePixelRatio;
-        graphCanvas.height = rect.height * window.devicePixelRatio;
-        ctx.setTransform(
-          window.devicePixelRatio,
-          0,
-          0,
-          window.devicePixelRatio,
-          0,
-          0
-        );
-        drawGraph();
-      }
-      window.addEventListener("resize", resizeCanvas);
+    init();
+  </script>
+</body>
 
-      /* ---------------------- 축 + 숫자 (막대보다 위로) ---------------------- */
-      function drawAxis(maxVal) {
-        const rect = graphCanvas.getBoundingClientRect();
-        const W = rect.width;
-        const H = rect.height;
-
-        const textY = 0;
-        const lineTop = 18;
-        const lineBottom = H;
-
-        const step = maxVal / 8;
-
-        ctx.save();
-        ctx.font = "300 16px Pretendard"; /* ← 폰트 사이즈 16px */
-        ctx.fillStyle = "#000000";
-        ctx.textAlign = "left";
-        ctx.textBaseline = "top";
-
-        ctx.strokeStyle = "rgba(0,0,0,0.1)";
-        ctx.lineWidth = 1;
-
-        for (let i = 0; i <= 8; i++) {
-          const ratio = i / 8;
-          const x = ratio * W;
-
-          const val = Math.round(step * i).toLocaleString();
-
-          /* 세로선 (막대보다 먼저 그릴 것이지만, 숫자보다는 뒤에 있음) */
-          ctx.beginPath();
-          ctx.moveTo(x, lineTop);
-          ctx.lineTo(x, lineBottom);
-          ctx.stroke();
-
-          /* 숫자 텍스트 (막대보다 “위”에 보이도록 마지막에 그림) */
-          ctx.fillText(val, x, textY);
-        }
-
-        ctx.restore();
-      }
-
-      function drawGraph() {
-        const rect = graphCanvas.getBoundingClientRect();
-        ctx.clearRect(0, 0, rect.width, rect.height);
-
-        let usedCount = Math.min(
-          Math.max(currentIndex, 0),
-          contentSlides.length
-        );
-        const W = rect.width;
-        const H = rect.height;
-
-        /* 홈 화면일 때도 축은 보여야 함 */
-        if (usedCount === 0) {
-          drawAxis(1); // 임시 maxVal=1
-          return;
-        }
-
-        const used = contentSlides.slice(0, usedCount);
-
-        const maxVal = used[usedCount - 1].lifespan;
-
-        /* 1) 축 먼저 */
-        drawAxis(maxVal);
-
-        /* 2) 막대 그리기 */
-        const minRecent = H * 0.05;
-        const normalHeight = H / usedCount;
-        const recentHeight = Math.max(normalHeight, minRecent);
-
-        const otherCount = usedCount - 1;
-        const otherHeight =
-          otherCount > 0 ? (H - recentHeight) / otherCount : 0;
-
-        used.forEach((item, i) => {
-          const isRecent = i === usedCount - 1;
-          let y;
-
-          if (isRecent) {
-            y = H - recentHeight;
-          } else {
-            y = i * otherHeight;
-          }
-
-          const alpha = alphaLevels[i % alphaLevels.length];
-          ctx.fillStyle = `rgba(252,81,1,${alpha})`;
-
-          const barWidth = (item.lifespan / maxVal) * W;
-          const barHeight = isRecent ? recentHeight : otherHeight;
-
-          ctx.fillRect(0, y, barWidth, barHeight);
-        });
-
-        /* 중요: 숫자가 막대보다 위에 나오도록 마지막에 다시 축 숫자를 그린다 */
-        drawAxis(maxVal);
-      }
-
-      /* ---------------------- 초기화 ---------------------- */
-      function init() {
-        createSlides();
-        resizeCanvas();
-        goToSlide(0);
-      }
-
-      init();
-    </script>
-  </body>
 </html>
